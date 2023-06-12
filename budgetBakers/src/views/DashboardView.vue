@@ -17,6 +17,16 @@
             <span>+ Add Wallet</span>
          </div>
       </section>
+
+      <Transition name="slide-fade">
+         <ToastNotification
+            v-if="toastShow"
+            :message="toastMessage"
+            :removeAction="toastRemoveAction"
+            @close="toastShow = false"
+            @cancel="toastCancel(toastCancelEvent)"
+         />
+      </Transition>
    </main>
 
    <Teleport to="body">
@@ -86,13 +96,14 @@
 import { useStore } from "vuex";
 
 import Modal from '../components/Modal.vue';
-import { getFirestore, collection, getDocs, addDoc, where } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, addDoc, where, deleteDoc, doc } from 'firebase/firestore';
 import { firebaseApp, config, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const firestore = getFirestore(firebaseApp);
 const walletCollection = collection(firestore, 'wallets');
 
+import ToastNotification from "../components/ToastNotification.vue";
 
 
 export default {
@@ -101,7 +112,8 @@ export default {
    },
    name: 'DashboardView',
    components: {
-      Modal
+      Modal,
+      ToastNotification,
    },
    data () {
       return {
@@ -122,6 +134,7 @@ export default {
          ],
          wallets: [],
          newWalletItem: {
+            id: '',
             name: '',
             balance: 0,
             currency: 'UAH',
@@ -130,6 +143,10 @@ export default {
             records: [],
          },
          firebaseApp: firebaseApp,
+         toastMessage: 'Placeholder',
+         toastShow: false,
+         toastRemoveAction: false,
+         toastCancelEvent: '',
       }
    },
    methods: {
@@ -140,17 +157,30 @@ export default {
 
             this.wallets = wallets.filter(wallet => wallet.uid === this.user.uid);
          }).catch((error) => {
+            // show toast notification
+            this.toastMessage = error;
+            this.toastShow = true;
+            this.toastRemoveAction = false;
             console.log('error', error);
          });
       },
       addNewWallet() {
          addDoc(walletCollection, this.newWalletItem)
             .then((docRef) => {
+
+               this.newWalletItem.id = docRef.id;
+
                this.getWallets();
+               // show toast notification
+               this.toastMessage = `Wallet ${this.newWalletItem.name} was added successfully`;
+               this.toastRemoveAction = true;
+               this.toastShow = true;
+               this.toastCancelEvent = 'cancelAddWallet'
             })
 
          // clear our form
          this.newWalletItem = {
+            id: '',
             name: '',
             balance: 0,
             currency: 'UAH',
@@ -159,6 +189,34 @@ export default {
             records: [],
          }
          this.showAddWalletModal = false;
+      },
+      removeLastAddedWallet() {
+         const lastAddedWallet = this.wallets[this.wallets.length - 1];
+         console.log('lastAddedWallet', lastAddedWallet);
+         const walletDocRef = doc(walletCollection, lastAddedWallet.uid);
+
+         deleteDoc(walletDocRef)
+            .then(() => {
+               // Item successfully deleted
+               this.getWallets();
+               // show toast notification
+               this.toastMessage = 'Wallet removed successfully';
+               this.toastRemoveAction = true;
+               this.toastShow = true;
+               this.toastCancelEvent = 'cancelRemoveWallet';
+            })
+            .catch((error) => {
+               // handle error
+            });
+      },
+      toastCancel(eventToCancel) {
+         switch (eventToCancel) {
+            case 'cancelAddWallet':
+               this.removeLastAddedWallet();
+               break;
+            default:
+               break;
+         }
       }
    },
    computed: {
@@ -180,3 +238,20 @@ export default {
 }
 
 </script>
+
+
+<style>
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.5s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(20px);
+  opacity: 0;
+}
+</style>
