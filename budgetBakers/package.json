@@ -12,6 +12,7 @@
   "dependencies": {
     "firebase": "^9.21.0",
     "vue": "^3.2.47",
+    "vue-my-toasts": "^2.0.1",
     "vue-router": "^4.1.6",
     "vuex": "^4.0.2"
   },

@@ -1,75 +1,74 @@
 <template>
-   <div class="toast py-2 px-5">
-      <div class="toast-body relative">
-         <p>{{ message }}</p>
-         <span v-if="removeAction" class="text-xs">
-            You have {{ timer / 1000 }} sec to
-            <a @click.prevent="cancelEvent" class="underline cursor-pointer">cancel this</a>
-         </span>
-         <span
-            @click="closeToast"
-            class="close absolute -top-4 -right-6 rounded-full bg-white w-5 h-5 text-center flex justify-center items-center shadow-grey cursor-pointer shadow">
-            X
-         </span>
-      </div>
+   <div :class="[
+      `bg-${color}-400`,
+      {
+         'mb-2': position.includes('top'),
+         'mt-2': position.includes('bottom'),
+      },
+   ]"
+      class="relative overflow-hidden p-3 bg-gray-800 items-center text-indigo-100 leading-none rounded-lg flex lg:inline-flex cursor-pointer select-none w-full"
+      role="alert" @click="$emit('remove')">
+      <!-- Loading bar -->
+      <div class="absolute bg-white opacity-25 left-0 bottom-0 h-1" :style="{ width: percentageElapsed + '%' }" />
+
+      <!-- Message -->
+      <span class="font-semibold mr-2 text-left flex-1">{{ message }}</span>
+
+      <!-- Icon -->
+      <svg :class="[position]" class="block opacity-75 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+         fill="#FFFFFF">
+         <path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z" />
+      </svg>
    </div>
 </template>
 
-<script setup>
-import { onMounted, ref } from 'vue';
+<script lang="ts">
+import { defineToastComponent } from 'vue-my-toasts'
 
-let props = defineProps({
-   message: String,
-   removeAction: {
-      type: Boolean,
-      default: false,
-   }
-});
+export default defineToastComponent({
+   name: 'TailwindComponent',
 
-let emits = defineEmits(['close', 'cancel']);
+   props: {
+      badge: {
+         type: [String, Boolean],
+         required: false,
+         default: false,
+      },
+   },
 
-// data
-let timer = ref(30000);
-
-// methods
-let closeToast = () => {
-   emits('close');
-};
-
-let closeToastAfterTimer = () => {
-   setInterval(() => {
-      timer.value -= 1000;
-      if (timer.value === 0) {
-         closeToast();
-      }
-   }, 1000);
-};
-
-let cancelEvent = () => {
-   emits('cancel');
-   resetTimer();
-};
-
-let resetTimer = () => {
-   timer.value = 30000;
-};
-
-// lifecycle
-onMounted(() => {
-   closeToastAfterTimer();
-   resetTimer();;
-});
-
+   computed: {
+      color() {
+         switch (this.type) {
+            case 'base':
+               return 'blue'
+            case 'warning':
+               return 'orange'
+            case 'error':
+               return 'red'
+            case 'success':
+               return 'green'
+            default:
+               return 'blue'
+         }
+      },
+   },
+})
 </script>
 
 <style scoped>
-.toast{
-   position: fixed;
-   bottom: 40px;
-   left: 50%;
-   transform: translateX(-50%);
-   background: #fff;
-   color: #000;
+svg.bottom-middle {
+   transform: rotate(90deg);
 }
 
+svg.top-middle {
+   transform: rotate(-90deg);
+}
+
+svg.bottom-left {
+   transform: rotate(180deg);
+}
+
+svg.top-left {
+   transform: rotate(180deg);
+}
 </style>

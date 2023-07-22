@@ -31,6 +31,7 @@ import { auth } from "./firebaseConfig";
         <template v-if="user.loggedIn">
           <RouterLink to="/dashboard">Dashboard</RouterLink>
           <RouterLink to="/records">Records</RouterLink>
+            <RouterLink to="/test">Test</RouterLink>
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">+ Record</button>
           <button @click.prevent="signOut" class="btn btn-primary">Log Out</button>
         </template>
